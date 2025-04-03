@@ -1,0 +1,13 @@
+<hr>
+<script>
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppOpenLink",
+      "url": "ftp://google.com/"
+  }),
+  "*"
+);
+window.addEventListener("message", (event) => {
+  console.log("Полученные данные:", event.data);
+});
+</script>
