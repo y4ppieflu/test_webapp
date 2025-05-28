@@ -5,7 +5,8 @@
     initdata = window.WebApp.initData;
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
     window.WebApp.DeviceStorage.setItem("test","test")
-    window.WebApp.DeviceStorage.getItem("test")
+    key = window.WebApp.DeviceStorage.getItem("test")
+    document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
   }
   
   /*
