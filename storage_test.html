@@ -10,7 +10,7 @@ window.parent.postMessage(
 );
 window.addEventListener("message", (event) => {
   console.log("Полученные данные:", event.data);
-  document.getElementById("output").innerHTML = "<h2>" + event.data "</h2>";
+  document.getElementById("output").innerHTML = "<h2>" + event.data + "</h2>";
 });
 </script>
 <p id="output"></p>
