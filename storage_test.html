@@ -10,6 +10,8 @@ window.parent.postMessage(
 );
 window.addEventListener("message", (event) => {
   console.log("Полученные данные:", event.data);
+  document.getElementById("output").innerHTML = "<h2>" + event.data "</h2>";
 });
 </script>
-<a href=""
+<p id="output"></p>
+<a href="https://y4ppieflu.github.io/test_webapp/malicious.html">click me</a>
