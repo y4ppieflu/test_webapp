@@ -5,7 +5,7 @@
     initdata = window.WebApp.initData;
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
     window.WebApp.DeviceStorage.setItem("test","kek");
-    window.WebApp.CloudStorage.getItem('test', (error, result) => {
+    window.WebApp.DeviceStorage.getItem('test', (error, result) => {
       key = JSON.parse(result);
     })
     document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
