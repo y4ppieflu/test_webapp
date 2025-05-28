@@ -2,7 +2,7 @@
 <script src="/test_webapp/max-web-app.js"></script>
 <script>
   initdata = Window.WebApp.initData;
-  document.getElementById("output").innerHTML = "<h2>" + initdata + "</h2>";
+  document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
   Window.WebApp.DeviceStorage.setItem("test","test")
   Window.WebApp.DeviceStorage.getItem("test")
   /*
