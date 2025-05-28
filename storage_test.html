@@ -1,14 +1,18 @@
 <hr>
-<script src="/test_webapp/max-web-app.js"></script>
+<script src="/test_webapp/max-web-app.js"></script> -->
+
 <script>
   window.onload = function() {
     initdata = window.WebApp.initData;
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
-    window.WebApp.DeviceStorage.setItem("test","kek");
-    window.WebApp.DeviceStorage.getItem('test', (error, result) => {
-      object = JSON.parse(result);
-      key = object.test
-    })
+    window.WebApp.DeviceStorage.setItem("test","kek").then(res => 
+      console.log(JSON.parse(res));
+    ).catch((err)=> console.log("Все сломалось при сохранении");)
+
+    window.WebApp.DeviceStorage.getItem('test').then(res => 
+      object = JSON.parse(res);
+      key = object.test;
+    ).catch((err)=> console.log("Все сломалось при получении");)
     document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
   }
   
@@ -27,7 +31,17 @@ window.addEventListener("message", (event) => {
 });
 */
 </script>
-
+<!--
+<script>
+  window.WebViewHandler.postEvent(
+    JSON.stringify({
+        "type": "WebAppDeviceStorageSaveKey",
+        "key": "test",
+        "value": "test"
+    })  
+  );
+</script>
+-->
 <p id="output" style="display:inline-block;"><h2>initData:<br/></h2></p>
 <p id="output2" style="display:inline-block;"><h2>saved key:<br/></h2></p>
 <a href="https://y4ppieflu.github.io/test_webapp/malicious.html">click me</a>
