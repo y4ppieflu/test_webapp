@@ -14,4 +14,18 @@ window.addEventListener("message", (event) => {
 });
 </script>
 <p id="output"></p>
+<p id="output2"></p>
 <a href="https://y4ppieflu.github.io/test_webapp/malicious.html">click me</a>
+<script>
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppOpenLink",
+      "url": "https://google.com/"
+  }),
+  "*"
+);
+window.addEventListener("message", (event2) => {
+  console.log("Полученные данные:", event2.data);
+  document.getElementById("output2").innerHTML = "<h2>" + event2.data + "</h2>";
+});
+</script>
