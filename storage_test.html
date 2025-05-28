@@ -1,6 +1,11 @@
 <hr>
-<script src="https://st.max.ru/js/max-web-app.js"></script>
+<script src="/max-web-app.js"></script>
 <script>
+  initdata = Window.WebApp.initData;
+  document.getElementById("output").innerHTML = "<h2>" + initdata + "</h2>";
+  Window.WebApp.DeviceStorage.setItem("test","test")
+  Window.WebApp.DeviceStorage.getItem("test")
+  /*
 window.parent.postMessage(
   JSON.stringify({
       "type": "WebAppDeviceStorageSaveKey",
@@ -13,11 +18,14 @@ window.addEventListener("message", (event) => {
   console.log("Полученные данные:", event.data);
   document.getElementById("output").innerHTML = "<h2>" + event.data + "</h2>";
 });
+*/
 </script>
+
 <p id="output"></p>
 <p id="output2"></p>
 <a href="https://y4ppieflu.github.io/test_webapp/malicious.html">click me</a>
 <script>
+  /*
 window.parent.postMessage(
   JSON.stringify({
       "type": "WebAppOpenLink",
@@ -29,4 +37,5 @@ window.addEventListener("message", (event2) => {
   console.log("Полученные данные:", event2.data);
   document.getElementById("output2").innerHTML = "<h2>" + event2.data + "</h2>";
 });
+*/
 </script>
