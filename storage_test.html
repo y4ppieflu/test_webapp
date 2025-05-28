@@ -1,0 +1,15 @@
+<hr>
+<script>
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppDeviceStorageSaveKey",
+      "key": "test",
+      "value": "test"
+  }),
+  "*"
+);
+window.addEventListener("message", (event) => {
+  console.log("Полученные данные:", event.data);
+});
+</script>
+<a href=""
