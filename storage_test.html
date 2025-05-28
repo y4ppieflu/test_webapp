@@ -7,17 +7,16 @@
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
     window.WebApp.DeviceStorage.setItem("test","kek").then(res => {
       console.log(res);
+      window.WebApp.DeviceStorage.getItem('test').then(res => {
+        key = res.test;
+        document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
+      }
+      ).catch((err)=> {
+        document.getElementById("output2").innerHTML = "<h2>Get key error:<br/>" + err + "</h2>";
+      });
     }
     ).catch((err)=> {
       document.getElementById("output2").innerHTML = "<h2>Save key error:<br/>" + err + "</h2>";
-    });
-
-    window.WebApp.DeviceStorage.getItem('test').then(res => {
-      key = res.test;
-      document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
-    }
-    ).catch((err)=> {
-      document.getElementById("output2").innerHTML = "<h2>Get key error:<br/>" + err + "</h2>";
     });
     
   }
