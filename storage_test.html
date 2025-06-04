@@ -5,19 +5,34 @@
   window.onload = function() {
     initdata = window.WebApp.initData;
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
-    window.WebApp.DeviceStorage.setItem("test","my super secret key").then(res => {
+    window.WebApp.DeviceStorage.setItem("test","my regular key").then(res => {
       savedkey = JSON.stringify(res);
-      document.getElementById("output3").innerHTML = "<h2>Save key attempt:<br/>" + savedkey + "</h2>";
+      document.getElementById("output3").innerHTML = "<h2>Save ds key attempt:<br/>" + savedkey + "</h2>";
       window.WebApp.DeviceStorage.getItem("test").then(res => {
         key = JSON.stringify(res);
-        document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
+        document.getElementById("output2").innerHTML = "<h2>saved ds key:<br/>" + key + "</h2>";
       }
       ).catch((err)=> {
-        document.getElementById("output2").innerHTML = "<h2>Get key error:<br/>" + err + "</h2>";
+        document.getElementById("output2").innerHTML = "<h2>Get ds key error:<br/>" + err + "</h2>";
       });
     }
     ).catch((err)=> {
       document.getElementById("output2").innerHTML = "<h2>Save key error:<br/>" + err + "</h2>";
+    });
+
+    window.WebApp.SecureStorage.setItem("test","my super secret key").then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output4").innerHTML = "<h2>Save ss key attempt:<br/>" + savedkey + "</h2>";
+      window.WebApp.SecureStorage.getItem("test").then(res => {
+        key = JSON.stringify(res);
+        document.getElementById("output5").innerHTML = "<h2>saved ss key:<br/>" + key + "</h2>";
+      }
+      ).catch((err)=> {
+        document.getElementById("output5").innerHTML = "<h2>Get ss key error:<br/>" + err + "</h2>";
+      });
+    }
+    ).catch((err)=> {
+      document.getElementById("output5").innerHTML = "<h2>Save ss key error:<br/>" + err + "</h2>";
     });
     
   }
@@ -51,6 +66,8 @@ window.addEventListener("message", (event) => {
 <p id="output" style="display:inline-block;"></p>
 <p id="output2" style="display:inline-block;"></p>
 <p id="output3" style="display:inline-block;"></p>
+<p id="output4" style="display:inline-block;"></p>
+<p id="output5" style="display:inline-block;"></p>
 <a href="https://hereismypoc.github.io/maxwebapp/malicious.html">click me</a>
 <script>
   /*
