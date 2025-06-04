@@ -6,10 +6,10 @@
     initdata = window.WebApp.initData;
     document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
     window.WebApp.DeviceStorage.setItem("test","my super secret key").then(res => {
-      console.log(res);
-      document.getElementById("output3").innerHTML = "<h2>Save key attempt:<br/>" + res + "</h2>";
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>Save key attempt:<br/>" + savedkey + "</h2>";
       window.WebApp.DeviceStorage.getItem("test").then(res => {
-        key = res;
+        key = JSON.stringify(res);
         document.getElementById("output2").innerHTML = "<h2>saved key:<br/>" + key + "</h2>";
       }
       ).catch((err)=> {
