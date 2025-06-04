@@ -1,7 +1,7 @@
-var v = Object.defineProperty;
-var g = (i, e, t) => e in i ? v(i, e, { enumerable: !0, configurable: !0, writable: !0, value: t }) : i[e] = t;
-var n = (i, e, t) => g(i, typeof e != "symbol" ? e + "" : e, t);
-class u {
+var u = Object.defineProperty;
+var v = (a, e, t) => e in a ? u(a, e, { enumerable: !0, configurable: !0, writable: !0, value: t }) : a[e] = t;
+var n = (a, e, t) => v(a, typeof e != "symbol" ? e + "" : e, t);
+class g {
   constructor({
     postBackButtonEvent: e,
     onClick: t,
@@ -41,14 +41,14 @@ class d {
     this.enabled = !1, this.postSwipesBehaviorEvent(!1);
   }
 }
-const c = class c {
+const h = class h {
   constructor() {
     n(this, "rawInitData");
     const e = this.extractInitData();
     if (e)
-      this.rawInitData = e, sessionStorage.setItem(c.WEB_APP_DATA_KEY, e);
+      this.rawInitData = e, sessionStorage.setItem(h.WEB_APP_DATA_KEY, e);
     else {
-      const t = sessionStorage.getItem(c.WEB_APP_DATA_KEY);
+      const t = sessionStorage.getItem(h.WEB_APP_DATA_KEY);
       this.rawInitData = t;
     }
   }
@@ -71,14 +71,14 @@ const c = class c {
    */
   getHashString(e) {
     const t = e.toString().replace(/^#/, "");
-    return new URLSearchParams(t).get(c.WEB_APP_DATA_KEY);
+    return new URLSearchParams(t).get(h.WEB_APP_DATA_KEY);
   }
   extractInitData() {
     try {
       const e = this.getHashString(location.hash);
       if (e) return e;
-      const t = performance.getEntriesByType("navigation")[0], s = t && new URL(t.name).hash, a = s && this.getHashString(s);
-      return a || null;
+      const t = performance.getEntriesByType("navigation")[0], s = t && new URL(t.name).hash, i = s && this.getHashString(s);
+      return i || null;
     } catch (e) {
       return console.warn("Ошибка при извлечении init data:", e), null;
     }
@@ -148,20 +148,18 @@ const c = class c {
     return t;
   }
 };
-n(c, "WEB_APP_DATA_KEY", "WebAppData");
-let h = c;
+n(h, "WEB_APP_DATA_KEY", "WebAppData");
+let c = h;
 class w {
   constructor({
     saveKey: e,
     getKey: t,
-    restoreKey: s,
-    clearKeys: a
+    clearKeys: s
   }) {
     n(this, "saveKey");
     n(this, "getKey");
-    n(this, "restoreKey");
     n(this, "clearKeys");
-    this.saveKey = e, this.getKey = t, this.restoreKey = s, this.clearKeys = a;
+    this.saveKey = e, this.getKey = t, this.clearKeys = s;
   }
   /**
    * Метод, который сохраняет переданную пару "ключ-значение" в защищенном хранилище устройства
@@ -174,12 +172,6 @@ class w {
    */
   getItem(e) {
     return this.getKey({ key: e });
-  }
-  /**
-   * Метод, для попытки восстановления ключа, который ранее существовал на текущем устройстве
-   */
-  restoreItem(e) {
-    return this.restoreKey({ key: e });
   }
   /**
    * Метод, который удаляет значение из защищённого хранилища устройства по указанному ключу
@@ -230,7 +222,7 @@ class y {
     return this.clearKeys();
   }
 }
-const E = 1e4, f = /^https:\/\/.*\.(?:max|oneme)\.ru$/;
+const f = 1e4, E = /^https:\/\/.*\.(?:max|oneme)\.ru$/;
 class b {
   constructor() {
     n(this, "eventHandlers", /* @__PURE__ */ new Map());
@@ -242,29 +234,48 @@ class b {
     n(this, "SecureStorage");
     n(this, "DeviceStorage");
     n(this, "BackButton");
+    /**
+     * Обёртка для автоматического добавления query_id к параметрам
+     */
+    n(this, "withQueryId", (e) => (t = {}) => {
+      var i;
+      const s = (i = this.initDataUnsafe) == null ? void 0 : i.query_id;
+      return e({ ...t || {}, queryId: s });
+    });
     this.isIframe() ? window.addEventListener("message", async (e) => {
-      if (!(!f.test(e.origin) || typeof e.data != "string"))
+      if (!(!E.test(e.origin) || typeof e.data != "string"))
         try {
           const { type: t, ...s } = JSON.parse(e.data);
           t != null && t.startsWith("WebApp") && await this.receiveEvent(t, s);
         } catch (t) {
           console.error("Ошибка при обработке сообщения:", t);
         }
-    }) : this.webviewBridge = window.WebViewHandler, this.BackButton = new u({
+    }) : this.webviewBridge = window.WebViewHandler, this.BackButton = new g({
       postBackButtonEvent: (e) => this.postEvent("WebAppSetupBackButton", { isVisible: e }),
       onClick: (e) => this.onEvent("WebAppBackButtonPressed", e),
       offClick: (e) => this.offEvent("WebAppBackButtonPressed", e)
     }), this.swipesBehaviorManager = new d({
       postSwipesBehaviorEvent: (e) => this.postEvent("WebAppSetupSwipesBehavior", { allowVerticalSwipes: e })
-    }), this.initDataManager = new h(), this.SecureStorage = new w({
-      saveKey: (e) => this.postEventAsync("WebAppSecureStorageSaveKey", e),
-      getKey: (e) => this.postEventAsync("WebAppSecureStorageGetKey", e),
-      restoreKey: (e) => this.postEventAsync("WebAppSecureStorageRestoreKey", e),
-      clearKeys: () => this.postEventAsync("WebAppSecureStorageClear")
+    }), this.initDataManager = new c(), this.SecureStorage = new w({
+      saveKey: this.withQueryId(
+        (e) => this.postEventAsync("WebAppSecureStorageSaveKey", e)
+      ),
+      getKey: this.withQueryId(
+        (e) => this.postEventAsync("WebAppSecureStorageGetKey", e)
+      ),
+      clearKeys: this.withQueryId(
+        (e) => this.postEventAsync("WebAppSecureStorageClear", e)
+      )
     }), this.DeviceStorage = new y({
-      saveKey: (e) => this.postEventAsync("WebAppDeviceStorageSaveKey", e),
-      getKey: (e) => this.postEventAsync("WebAppDeviceStorageGetKey", e),
-      clearKeys: () => this.postEventAsync("WebAppDeviceStorageClear")
+      saveKey: this.withQueryId(
+        (e) => this.postEventAsync("WebAppDeviceStorageSaveKey", e)
+      ),
+      getKey: this.withQueryId(
+        (e) => this.postEventAsync("WebAppDeviceStorageGetKey", e)
+      ),
+      clearKeys: this.withQueryId(
+        (e) => this.postEventAsync("WebAppDeviceStorageClear", e)
+      )
     });
   }
   /**
@@ -298,9 +309,9 @@ class b {
    * Отправка события с ожиданием ответа
    */
   postEventAsync(e, t = {}) {
-    return new Promise((s, a) => {
+    return new Promise((s, i) => {
       const r = crypto.randomUUID();
-      this.pendingRequests.set(r, { resolve: s, reject: a }), this.sendEventByClientType(e, { ...t, requestId: r }), setTimeout(a, E);
+      this.pendingRequests.set(r, { resolve: s, reject: i }), this.sendEventByClientType(e, { ...t, requestId: r }), setTimeout(i, f);
     });
   }
   /**
@@ -313,9 +324,9 @@ class b {
    * Обработка полученного события
    */
   async receiveEvent(e, { requestId: t, ...s }) {
-    var a, r;
+    var i, r;
     if (t && "error" in s)
-      console.log(`[WebApp] Получена ошибка: ${e}`, s), (a = this.pendingRequests.get(t)) == null || a.reject(s), this.pendingRequests.delete(t);
+      console.log(`[WebApp] Получена ошибка: ${e}`, s), (i = this.pendingRequests.get(t)) == null || i.reject(s), this.pendingRequests.delete(t);
     else if (t && !("error" in s))
       console.log(`[WebApp] Получено событие: ${e}`, s), (r = this.pendingRequests.get(t)) == null || r.resolve(s), this.pendingRequests.delete(t);
     else {
@@ -420,4 +431,5 @@ class b {
     return this.postEventAsync("WebAppDownloadFile", { url: e, file_name: t });
   }
 }
-window.WebApp = new b();
+const S = new b();
+window.WebApp = S;
