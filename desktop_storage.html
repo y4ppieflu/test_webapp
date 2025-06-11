@@ -1,0 +1,72 @@
+<hr>
+<script src="/test_webapp/max-web-app.js"></script>
+
+<script>
+  window.onload = function() {
+    
+      window.WebApp.DeviceStorage.getItem("test").then(res => {
+        key = JSON.stringify(res);
+        document.getElementById("output2").innerHTML = "<h2>saved ds key:<br/>" + key + "</h2>";
+      }
+      ).catch((err)=> {
+        document.getElementById("output2").innerHTML = "<h2>Get ds key error:<br/>" + err + "</h2>";
+      });
+   
+
+    
+      window.WebApp.SecureStorage.getItem("test").then(res => {
+        key = JSON.stringify(res);
+        document.getElementById("output5").innerHTML = "<h2>saved ss key:<br/>" + key + "</h2>";
+      }
+      ).catch((err)=> {
+        document.getElementById("output5").innerHTML = "<h2>Get ss key error:<br/>" + err + "</h2>";
+      });
+    
+  }
+  
+  /*
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppDeviceStorageSaveKey",
+      "key": "test",
+      "value": "test"
+  }),
+  "*"
+);
+window.addEventListener("message", (event) => {
+  console.log("Полученные данные:", event.data);
+  document.getElementById("output").innerHTML = "<h2>" + event.data + "</h2>";
+});
+*/
+</script>
+<!--
+<script>
+  window.WebViewHandler.postEvent(
+    JSON.stringify({
+        "type": "WebAppDeviceStorageSaveKey",
+        "key": "test",
+        "value": "test"
+    })  
+  );
+</script>
+-->
+<p id="output" style="display:inline-block;"></p>
+<p id="output2" style="display:inline-block;"></p>
+<p id="output3" style="display:inline-block;"></p>
+<p id="output4" style="display:inline-block;"></p>
+<p id="output5" style="display:inline-block;"></p>
+<script>
+  /*
+window.parent.postMessage(
+  JSON.stringify({
+      "type": "WebAppOpenLink",
+      "url": "https://google.com/"
+  }),
+  "*"
+);
+window.addEventListener("message", (event2) => {
+  console.log("Полученные данные:", event2.data);
+  document.getElementById("output2").innerHTML = "<h2>" + event2.data + "</h2>";
+});
+*/
+</script>
