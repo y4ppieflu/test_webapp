@@ -1,4 +1,4 @@
-<hr>
+<!--
 <script>
 window.parent.postMessage(
   JSON.stringify({
@@ -11,3 +11,13 @@ window.addEventListener("message", (event) => {
   console.log("Полученные данные:", event.data);
 });
 </script>
+-->
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"> <title>Calc</title>
+  <script> 
+  // window.location = 'calc:' // ← Калькулятор будет автоматически открыт на ОС macOs 
+  </script> 
+</head> 
+  <body> <a href="ms-calculator:">Открыть калькулятор в Windows (1-click)</a><br> 
+    <a href="calc:">Открыть калькулятор в MacOs one-click (1-click)</a> 
+  </body> 
+</html>
