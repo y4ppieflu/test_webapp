@@ -4,9 +4,8 @@
 <script>
   window.onload = function() {
     window.WebApp.enableClosingConfirmation();
-    
-    //initdata = window.WebApp.initData;
-    //document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
+  }
+  function MaxShareFunction() {
     window.WebApp.shareMaxContent({
         text: "test link",
         link: "https://google.com"
@@ -17,10 +16,60 @@
     ).catch((err)=> {
       document.getElementById("output2").innerHTML = "<h2>shareMaxContent error:<br/>" + err + "</h2>";
     });
-
+  }
+  function ShareFunction() {
+    window.WebApp.shareContent({
+        text: "test link",
+        link: "https://google.com"
+      }).then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>shareContent attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>shareContent error:<br/>" + err + "</h2>";
+    });
+  }
+  function DownloadFileFunction() {
+    window.WebApp.downloadFile({
+        url: "https://cdn-media-2.freecodecamp.org/w1280/5f9c9eb2740569d1a4ca3e93.jpg",
+        filename: "test.jpg"
+      }).then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>downloadFile attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>downloadFile error:<br/>" + err + "</h2>";
+    });
+  }
+  function OpenLinkFunction() {
+    window.WebApp.openLink({
+        url: "https://google.com"
+      }).then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>openLink attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>openLink error:<br/>" + err + "</h2>";
+    });
+  }
+  function OpenMaxLinkFunction() {
+    window.WebApp.openMaxLink({
+        url: "https://max.ru/pupu2"
+      }).then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>openMaxLink attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>openMaxLink error:<br/>" + err + "</h2>";
+    });
   }
 </script>
-<p id="output" style="display:inline-block;"></p>
+<button onclick="MaxShareFunction()">WebAppMaxShare</button>
+<button onclick="ShareFunction()">WebAppShare</button>
+<button onclick="DownloadFileFunction()">WebAppDownloadFile</button>
+<button onclick="OpenLinkFunction()">WebAppOpenLink</button>
+<button onclick="OpenMaxLinkFunction()">WebAppOpenMaxLink</button>
+
 <p id="output2" style="display:inline-block;"></p>
 <p id="output3" style="display:inline-block;"></p>
 <p id="output4" style="display:inline-block;"></p>
