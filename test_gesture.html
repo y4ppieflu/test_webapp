@@ -5,6 +5,11 @@
   window.onload = function() {
     window.WebApp.enableClosingConfirmation();
     MaxShareFunction();
+    ShareFunction();
+    DownloadFileFunction();
+    OpenLinkFunction();
+    OpenMaxLinkFunction();
+    window.WebApp.requestContact();
   }
   function MaxShareFunction() {
     window.WebApp.shareMaxContent({
