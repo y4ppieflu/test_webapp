@@ -30,10 +30,7 @@
     });
   }
   function DownloadFileFunction() {
-    window.WebApp.downloadFile({
-        url: "https://internetinstitute.ru/file/6/",
-        filename: "test.jpg"
-      }).then(res => {
+    window.WebApp.downloadFile("https://internetinstitute.ru/file/6/", "test.jpg").then(res => {
       savedkey = JSON.stringify(res);
       document.getElementById("output3").innerHTML = "<h2>downloadFile attempt:<br/>" + savedkey + "</h2>";
     }
