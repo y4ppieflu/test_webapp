@@ -42,9 +42,7 @@
     });
   }
   function OpenLinkFunction() {
-    window.WebApp.openLink({
-        url: "https://google.com"
-      }).then(res => {
+    window.WebApp.openLink("https://google.com").then(res => {
       savedkey = JSON.stringify(res);
       document.getElementById("output3").innerHTML = "<h2>openLink attempt:<br/>" + savedkey + "</h2>";
     }
@@ -53,9 +51,7 @@
     });
   }
   function OpenMaxLinkFunction() {
-    window.WebApp.openMaxLink({
-        url: "https://max.ru/pupu2"
-      }).then(res => {
+    window.WebApp.openMaxLink("https://max.ru/pupu2").then(res => {
       savedkey = JSON.stringify(res);
       document.getElementById("output3").innerHTML = "<h2>openMaxLink attempt:<br/>" + savedkey + "</h2>";
     }
