@@ -7,7 +7,10 @@
     
     //initdata = window.WebApp.initData;
     //document.getElementById("output").innerHTML = "<h2>initData:<br/>" + initdata + "</h2>";
-    window.WebApp.shareMaxContent("test link","https://google.com").then(res => {
+    window.WebApp.shareMaxContent({
+        text: "test link",
+        link: "https://google.com"
+      }).then(res => {
       savedkey = JSON.stringify(res);
       document.getElementById("output3").innerHTML = "<h2>shareMaxContent attempt:<br/>" + savedkey + "</h2>";
     }
