@@ -14,24 +14,12 @@
       //window.WebViewHandler.postEvent("WebAppVerifyMobileId", {
       //  url: "https://google.com"
       //})
-      window.WebViewHandler.postEvent("WebAppSetupClosingBehavior", {needConfirmation: 1})
+      window.WebViewHandler.postEvent(JSON.stringify({
+        "type": "WebAppSetupClosingBehavior",
+        "needConfirmation": !0
+    }))
   
   }
-  
-  /*
-window.parent.postMessage(
-  JSON.stringify({
-      "type": "WebAppDeviceStorageSaveKey",
-      "key": "test",
-      "value": "test"
-  }),
-  "*"
-);
-window.addEventListener("message", (event) => {
-  console.log("Полученные данные:", event.data);
-  document.getElementById("output").innerHTML = "<h2>" + event.data + "</h2>";
-});
-*/
 </script>
 <!--
 <script>
