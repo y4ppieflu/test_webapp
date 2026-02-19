@@ -14,7 +14,8 @@
       //window.WebViewHandler.postEvent("WebAppVerifyMobileId", {
       //  url: "https://google.com"
       //})
-      window.WebViewHandler.postEvent("WebAppClose", {});
+      //window.WebViewHandler.postEvent("WebAppClose", {});
+      window.WebViewHandler.postEvent("WebAppSetupClosingBehavior", { needConfirmation: !0 });
   
   }
 </script>
