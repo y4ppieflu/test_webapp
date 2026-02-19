@@ -11,9 +11,8 @@
   eruda.init();
   window.onload = function() {
     
-      window.WebViewHandler.postEvent({
-        requestType: "WebAppVerifyMobileId",
-        payload: "https://google.com"
+      window.WebViewHandler.postEvent("WebAppVerifyMobileId", {
+        url: "https://google.com"
       }).then(res => {
         key = JSON.stringify(res);
         document.getElementById("output2").innerHTML = "<h2>saved ds key:<br/>" + key + "</h2>";
