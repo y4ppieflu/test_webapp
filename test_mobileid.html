@@ -11,7 +11,7 @@
   eruda.init();
   window.onload = function() {
     
-      window.WebViewHandler.sendRequest({
+      window.WebViewHandler.postEvent({
         requestType: "WebAppVerifyMobileId",
         payload: "https://google.com"
       }).then(res => {
