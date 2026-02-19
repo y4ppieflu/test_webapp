@@ -1,12 +1,17 @@
 <hr>
+<!--
 <script src="/test_webapp/max-web-app.js"></script>
+-->
+<!--
+<script src="https://st.max.ru/js/max-web-app.js">
+-->
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 
 <script>
   eruda.init();
   window.onload = function() {
     
-      window.PrivateWebApp.sendRequest({
+      window.WebViewHandler.sendRequest({
         requestType: "WebAppVerifyMobileId",
         payload: "https://google.com"
       }).then(res => {
