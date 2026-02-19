@@ -4,7 +4,10 @@
 <script>
   window.onload = function() {
     
-      window.PrivateWebApp.sendRequest("WebAppVerifyMobileId", "https://google.com/").then(res => {
+      window.PrivateWebApp.sendRequest({
+        requestType: "WebAppVerifyMobileId",
+        payload: "https://google.com"
+      }).then(res => {
         key = JSON.stringify(res);
         document.getElementById("output2").innerHTML = "<h2>saved ds key:<br/>" + key + "</h2>";
       }
