@@ -11,9 +11,10 @@
   eruda.init();
   window.onload = function() {
     
-      window.WebViewHandler.postEvent("WebAppVerifyMobileId", {
-        url: "https://google.com"
-      })
+      //window.WebViewHandler.postEvent("WebAppVerifyMobileId", {
+      //  url: "https://google.com"
+      //})
+      window.WebViewHandler.postEvent("WebAppSetupClosingBehavior", {needConfirmation: 1})
   
   }
   
