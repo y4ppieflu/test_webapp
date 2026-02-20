@@ -15,7 +15,8 @@
       //  url: "https://google.com"
       //})
       //window.WebViewHandler.postEvent("WebAppClose", {});
-      window.WebViewHandler.postEvent("WebAppSetupClosingBehavior", JSON.stringify({ needConfirmation: !0 }));
+      //window.WebViewHandler.postEvent("WebAppSetupClosingBehavior", JSON.stringify({ needConfirmation: !0 }));
+      window.WebViewHandler.postEvent("WebAppVerifyMobileId", JSON.stringify({ url: "https://google.com" }));
   
   }
 </script>
