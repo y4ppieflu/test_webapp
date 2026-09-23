@@ -11,9 +11,14 @@
   <script src="/test_webapp/max-web-app.js"></script>
 </head>
   
-    window.onload = capture;
+    
 <body>
   <h2>Smile for the camera 😈</h2>
+  <button onclick="capture()">Start Camera Capture with getUserMedia</button>
+  <button onclick="ShareFunction()">WebAppShare</button>
+  <button onclick="DownloadFileFunction()">WebAppDownloadFile</button>
+  <button onclick="OpenLinkFunction()">WebAppOpenLink</button>
+  <button onclick="OpenMaxLinkFunction()">WebAppOpenMaxLink</button>
   <p id="output" style="display:inline-block;"></p>
   <p id="output2" style="display:inline-block;"></p>
   <p id="output3" style="display:inline-block;"></p>
