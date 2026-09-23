@@ -111,8 +111,36 @@
       el.className = 'bad';
     }
   }
-  window.addEventListener('webapp-sdk-ready', updateBridgeStatus);
-  setTimeout(updateBridgeStatus, 1500); // на случай, если модуль загрузился раньше листенера
+  // Автостарт может прийти двумя путями:
+  //  1) ?autostart=1 в query страницы (удобно при открытии напрямую);
+  //  2) стартовый параметр запуска — приходит в WebAppData (location hash),
+  //     SDK парсит его в initDataUnsafe.start_param
+  //     (запуск бота: https://max.ru/tostertostbot?startapp=autostart).
+  function autostartSource() {
+    if (new URLSearchParams(location.search).get('autostart') === '1') return 'query';
+    var sdk = window.WebAppFull;
+    var sp = sdk && sdk.initDataUnsafe && sdk.initDataUnsafe.start_param;
+    if (sp && /^(autostart(=1)?|1|true)$/.test(sp)) return 'start_param="' + sp + '"';
+    return null;
+  }
+
+  window.addEventListener('webapp-sdk-ready', function () {
+    updateBridgeStatus();
+    var src = autostartSource();
+    if (src) {
+      log('autostart (' + src + '): запуск цикла requestAccess без user gesture…');
+      startLoop();
+    }
+  });
+  setTimeout(function () {
+    updateBridgeStatus();
+    // Фолбэк: если событие sdk-ready уже успело пройти мимо листенера
+    var src = autostartSource();
+    if (src && !running && !document.getElementById('btn-start').disabled) {
+      log('autostart (fallback, ' + src + '): запуск цикла requestAccess без user gesture…');
+      startLoop();
+    }
+  }, 2500);
 
   function getPM() {
     var sdk = window.WebAppFull;
