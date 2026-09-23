@@ -161,18 +161,44 @@
 
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+  var lastInitError = '';
+
+  // Настоящий отказ пользователя. Всё остальное (not_inited, not_found,
+  // request_timeout, not_supported, refused от toggle) — ошибки окружения:
+  // гонять по ним цикл бессмысленно, останавливаемся.
+  function isDenialCode(code) {
+    return /_permission_denied$/.test(String(code));
+  }
+
+  async function ensureInit(pm, attempts) {
+    for (var i = 1; i <= attempts; i++) {
+      try {
+        await pm.init();
+        lastInitError = '';
+        return true;
+      } catch (e) {
+        lastInitError = errText(e);
+        log('init() попытка ' + i + '/' + attempts + ' — ошибка: ' + lastInitError);
+        if (i < attempts) await sleep(1500);
+      }
+    }
+    return false;
+  }
+
+  function initErrorHint() {
+    if (/request_timeout/.test(lastInitError)) return 'Запрос не дошёл/нет ответа — страница открыта вне клиента MAX (транспорт sendFallback) или bridge ещё не готов.';
+    if (/refused/.test(lastInitError)) return 'Клиент вернул refused — скорее всего выключен фиче-тоггл webapp-video-stream на этой сборке.';
+    if (/not_found/.test(lastInitError)) return 'Клиент вернул not_found — queryId из WebAppData не совпал с queryId текущего запуска.';
+    return 'См. код ошибки выше.';
+  }
+
   // ---- одиночный запрос ----
   async function RequestOnce() {
     var pm = getPM();
     if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
     var reason = document.getElementById('reason').value || undefined;
-    try {
-      await pm.init();                       // обязательный шаг: без него requestAccess -> not_inited
-      log('init() ok, camera.appAccessGranted=' + pm.isCameraAppAccessGranted);
-    } catch (e) {
-      log('init() ошибка: ' + errText(e));
-      return;
-    }
+    if (!await ensureInit(pm, 1)) { log('init() не удался: ' + initErrorHint()); return; }
+    log('init() ok, camera.appAccessGranted=' + pm.isCameraAppAccessGranted);
     try {
       var res = await pm.requestAccess(permsArray(), reason);
       log('requestAccess ok: ' + JSON.stringify(res));
@@ -201,8 +227,14 @@
       nDenied++; stat();
       log('ИТЕРАЦИЯ ' + nIter + ': ответ без доступа → повторный запрос.');
     } catch (e) {
+      var code = errText(e);
+      if (!isDenialCode(code)) {
+        log('ИТЕРАЦИЯ ' + nIter + ': ошибка окружения (' + code + ') — НЕ отказ пользователя, цикл остановлен.');
+        stopLoop();
+        return;
+      }
       nDenied++; stat();
-      log('ИТЕРАЦИЯ ' + nIter + ': отказ (' + errText(e) + ') → повторный запрос.');
+      log('ИТЕРАЦИЯ ' + nIter + ': отказ (' + code + ') → повторный запрос.');
     }
     var d = parseInt(document.getElementById('delay').value, 10) || 0;
     await sleep(d);
@@ -212,12 +244,19 @@
   async function startLoop() {
     var pm = getPM();
     if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
-    try {
-      await pm.init();
-      log('init() ok. Старт цикла: жмите «Отмена» в шите согласия.');
-    } catch (e) {
-      log('init() ошибка: ' + errText(e) + ' — цикл всё равно стартует.');
+
+    // Диагностика окружения (значения не логируем, только факт наличия)
+    var sdk = window.WebAppFull;
+    log('platform=' + (sdk.platform || '?') +
+        ', query_id=' + (sdk.initDataUnsafe && sdk.initDataUnsafe.query_id ? 'есть' : 'ОТСУТСТВУЕТ') +
+        ', start_param=' + JSON.stringify((sdk.initDataUnsafe && sdk.initDataUnsafe.start_param) || null));
+
+    // Без успешного init() цикл не запускаем: requestAccess без него всегда not_inited
+    if (!await ensureInit(pm, 3)) {
+      log('init() не удался — цикл НЕ запущен. ' + initErrorHint());
+      return;
     }
+    log('init() ok. Старт цикла: жмите «Отмена» в шите согласия.');
     running = true;
     document.getElementById('btn-start').disabled = true;
     document.getElementById('btn-stop').disabled = false;
