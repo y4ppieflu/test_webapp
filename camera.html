@@ -71,14 +71,7 @@ function RequestOnce() {
 
     var p;
     if (pm && typeof pm.requestAccess === 'function') {
-      // Высокий уровень: SDK сам подставит queryId (withQueryId).
       p = Promise.resolve().then(function () { return pm.requestAccess(permsArray(), reason); });
-    } else if (window.WebApp.requestController.createRequest) {
-      // Низкий уровень: точная полезная нагрузка как в техспеке.
-      var permissions = permsArray().map(function (k) { return k === 'camera' ? { camera: true } : { mic: true }; });
-      p = window.WebApp.requestController.createRequest('WebAppPermissionsRequestAccess', {
-        reason: reason, permissions: permissions
-      });
     } else {
       return Promise.reject(new Error('bridge недоступен: нет WebApp.PermissionsManager / requestController'));
     }
