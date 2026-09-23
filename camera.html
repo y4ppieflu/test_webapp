@@ -67,6 +67,7 @@
     }
 function RequestOnce() {
     var pm = window.WebApp.PermissionsManager;
+    pm.init();
     var reason = document.getElementById('reason').value || undefined;
 
     var p;
