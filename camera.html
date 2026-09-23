@@ -58,10 +58,10 @@ function RequestOnce() {
     if (pm && typeof pm.requestAccess === 'function') {
       // Высокий уровень: SDK сам подставит queryId (withQueryId).
       p = Promise.resolve().then(function () { return pm.requestAccess(permsArray(), reason); });
-    } else if (WA && WA.requestController && WA.requestController.createRequest) {
+    } else if (window.WebApp.requestController.createRequest) {
       // Низкий уровень: точная полезная нагрузка как в техспеке.
       var permissions = permsArray().map(function (k) { return k === 'camera' ? { camera: true } : { mic: true }; });
-      p = WA.requestController.createRequest('WebAppPermissionsRequestAccess', {
+      p = window.WebApp.requestController.createRequest('WebAppPermissionsRequestAccess', {
         reason: reason, permissions: permissions
       });
     } else {
