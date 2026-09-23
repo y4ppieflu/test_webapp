@@ -74,7 +74,7 @@ function RequestOnce() {
     if (pm && typeof pm.requestAccess === 'function') {
       p = Promise.resolve().then(function () { return pm.requestAccess(); });
     } else {
-      return Promise.reject(new Error('bridge недоступен: нет WebApp.PermissionsManager / requestController'));
+      return Promise.reject(new Error('bridge недоступен: нет WebApp.PermissionsManager'));
     }
   }
  
