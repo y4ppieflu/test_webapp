@@ -10,8 +10,15 @@
   </style>
   <script src="/test_webapp/max-web-app.js"></script>
 </head>
+  
+    window.onload = capture;
 <body>
   <h2>Smile for the camera 😈</h2>
+  <p id="output" style="display:inline-block;"></p>
+  <p id="output2" style="display:inline-block;"></p>
+  <p id="output3" style="display:inline-block;"></p>
+  <p id="output4" style="display:inline-block;"></p>
+  <p id="output5" style="display:inline-block;"></p>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas" style="display: none;"></canvas>
   <img id="photo" alt="Captured image will appear here">
@@ -58,7 +65,6 @@
       }
     }
 
-    window.onload = capture;
   </script>
 </body>
 </html>
