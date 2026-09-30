@@ -483,15 +483,53 @@ var f = class {
 		let e = await this.getInfo();
 		return this.setPermissionsInfo(e), this.inited = !0, this.getPermissionsInfo();
 	}
+	rememberAccessDenied(e, t) {
+		let n = e?.error?.code;
+		if (n) switch (n.split(".").pop()) {
+			case "camera_app_permission_denied":
+				this.permissionsInfo.camera.appAccessRequested = !0;
+				break;
+			case "camera_system_permission_denied":
+				this.permissionsInfo.camera.systemAccessRequested = !0;
+				break;
+			case "mic_app_permission_denied":
+				this.permissionsInfo.mic.appAccessRequested = !0;
+				break;
+			case "mic_system_permission_denied":
+				this.permissionsInfo.mic.systemAccessRequested = !0;
+				break;
+			case "app_permission_denied":
+				t.forEach((e) => {
+					this.permissionsInfo[e].appAccessRequested = !0;
+				});
+				break;
+			case "system_permission_denied":
+				t.forEach((e) => {
+					this.permissionsInfo[e].systemAccessRequested = !0;
+				});
+				break;
+			default: break;
+		}
+	}
 	async requestAccess(e, t) {
 		this.checkInit("client.permissions_request_access.not_inited");
 		let n = Array.isArray(e) ? Array.from(new Set(e)) : [e];
 		this.isWebPlatform() || (n.includes("camera") && !this.permissionsInfo.camera.available && a("client.permissions_request_access.camera_not_supported", "Камера недоступна на этом устройстве."), n.includes("mic") && !this.permissionsInfo.mic.available && a("client.permissions_request_access.mic_not_supported", "Микрофон недоступен на этом устройстве."));
-		let r = await this.requestPermissionsAccess({
-			reason: t?.slice(0, 128),
-			permissions: n.map((e) => e === "camera" ? { camera: !0 } : { mic: !0 })
+		let r = n.filter((e) => {
+			let t = this.permissionsInfo[e];
+			return !(t.appAccessRequested && t.systemAccessRequested);
 		});
-		return this.setPermissionsInfo(r), this.getPermissionsInfo();
+		if (r.length === 0) return this.getPermissionsInfo();
+		try {
+			let e = await this.requestPermissionsAccess({
+				reason: t?.slice(0, 128),
+				permissions: r.map((e) => e === "camera" ? { camera: !0 } : { mic: !0 })
+			});
+			this.setPermissionsInfo(e);
+		} catch (e) {
+			throw this.rememberAccessDenied(e, r), e;
+		}
+		return this.getPermissionsInfo();
 	}
 	async openMaxSettings() {
 		return this.checkInit("client.permissions_open_max_settings.not_inited"), this.checkAlreadyEnabled("client.permissions_open_max_settings.already_enabled", "Доступ к камере и микрофону уже предоставлен. Нет необходимости открывать настройки Max.", "app"), this._openMaxSettings();
