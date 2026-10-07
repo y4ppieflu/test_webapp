@@ -41,6 +41,10 @@
   </script>
   -->
   <script src="https://st.max.ru/js/max-web-app.js"></script>
+  <script>
+    window.WebAppFull = window.WebApp;
+    window.dispatchEvent(new Event('webapp-sdk-ready'));
+  </script>
 </head>
 
 <body>
