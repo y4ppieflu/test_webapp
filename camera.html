@@ -42,7 +42,6 @@
   -->
   <script src="https://st.max.ru/js/max-web-app.js"></script>
   <script>
-    window.WebAppFull = window.WebApp;
     window.dispatchEvent(new Event('webapp-sdk-ready'));
   </script>
 </head>
@@ -117,9 +116,9 @@
 
   function updateBridgeStatus() {
     var el = document.getElementById('bridge-status');
-    var sdk = window.WebAppFull;
+    var sdk = window.WebApp;
     if (sdk && sdk.PermissionsManager) {
-      el.textContent = 'bridge: WebAppFull.PermissionsManager доступен (platform: ' + (sdk.platform || '?') + ')';
+      el.textContent = 'bridge: WebApp.PermissionsManager доступен (platform: ' + (sdk.platform || '?') + ')';
       el.className = 'ok';
     } else if (sdk) {
       el.textContent = 'bridge: SDK загружен, но PermissionsManager отсутствует';
@@ -155,7 +154,7 @@
         return 'query:"' + q + '"';
       }
     }
-    var sdk = window.WebAppFull;
+    var sdk = window.WebApp;
     var sp = sdk && sdk.initDataUnsafe && sdk.initDataUnsafe.start_param;
     if (sp) {
       var k = sp.replace(/=1$/, '');
@@ -186,7 +185,7 @@
   }, 2500);
 
   function getPM() {
-    var sdk = window.WebAppFull;
+    var sdk = window.WebApp;
     return sdk && sdk.PermissionsManager;
   }
 
@@ -334,7 +333,7 @@
     if (!pm) { log('bridge недоступен: SDK ещё не загружен или открыт вне клиента MAX'); return; }
 
     // Диагностика окружения (значения не логируем, только факт наличия)
-    var sdk = window.WebAppFull;
+    var sdk = window.WebApp;
     log('platform=' + (sdk.platform || '?') +
         ', query_id=' + (sdk.initDataUnsafe && sdk.initDataUnsafe.query_id ? 'есть' : 'ОТСУТСТВУЕТ') +
         ', start_param=' + JSON.stringify((sdk.initDataUnsafe && sdk.initDataUnsafe.start_param) || null) +
