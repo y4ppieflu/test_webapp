@@ -33,11 +33,14 @@
     модуля. Поэтому импортируем его явно и кладём в глобальную переменную,
     доступную обычным (не-module) скриптам ниже.
   -->
+  <!--
   <script type="module">
     import WebAppFull from './max-web-app.mjs';
     window.WebAppFull = WebAppFull;
     window.dispatchEvent(new Event('webapp-sdk-ready'));
   </script>
+  -->
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
 </head>
 
 <body>
