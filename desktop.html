@@ -13,13 +13,24 @@ window.addEventListener("message", (event) => {
 </script>
 -->
 <!DOCTYPE html> <html> <head> <meta charset="UTF-8"> <title>Calc</title>
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
   <script> 
-  // window.location = 'calc:' // ← Калькулятор будет автоматически открыт на ОС macOs 
+    function OpenMaxLinkFunction() {
+    window.WebApp.openMaxLink('max://x" close_and_clear "y').then(res => {
+      savedkey = JSON.stringify(res);
+      document.getElementById("output3").innerHTML = "<h2>openMaxLink attempt:<br/>" + savedkey + "</h2>";
+    }
+    ).catch((err)=> {
+      document.getElementById("output2").innerHTML = "<h2>openMaxLink error:<br/>" + err + "</h2>";
+    });
+  }
   </script> 
+  
 </head> 
   <body> <a href="ms-calculator:">Открыть калькулятор в Windows (1-click)</a><br> 
-    <a href="calc:">Открыть калькулятор в MacOs one-click (1-click)</a> 
-    <a href="tel:+79112660577">Позвонить по номеру</a>
-    <a href='max://x" close_and_clear "y'>Закрыть МАХ и выйти из аккаунта</a>
+    <a href="calc:">Открыть калькулятор в MacOs one-click (1-click)</a> <br>
+    <a href="tel:+79112660577">Позвонить по номеру</a><br>
+    <a href='max://x" close_and_clear "y'>Закрыть МАХ и выйти из аккаунта</a><br>
+    <button onclick="OpenMaxLinkFunction()">WebAppOpenMaxLink</button>
   </body> 
 </html>
