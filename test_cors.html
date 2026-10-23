@@ -7,7 +7,6 @@
          <script>
              function cors() {
              var xhr = new XMLHttpRequest();
-             xhr.setRequestHeader("X-Ajax-Request", "true");
              xhr.onreadystatechange = function() {
                  if (this.readyState == 4 && this.status == 200) {
                  document.getElementById("demo").innerHTML = alert(this.responseText);
@@ -16,6 +15,7 @@
               xhr.open("GET",
                        "https://moderation-test.oneme.ru/api/user", true);
              xhr.withCredentials = true;
+             xhr.setRequestHeader("X-Ajax-Request", "true");
              xhr.send();
              }
          </script>
